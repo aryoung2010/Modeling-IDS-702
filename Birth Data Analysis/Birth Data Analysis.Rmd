@@ -1,0 +1,60 @@
+---
+title: "Birth Data Report"
+author: "Allison Young"
+date: "September 22, 2018"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Setup and Load Analysis Functions
+Load libraries and functions I've created to help with basic data analysis and dataset preview
+```{r, include=FALSE}
+#Load libraries
+library(readr)
+# Load Functions
+setwd("C:/Users/ayoung/Desktop/Duke/Git Repositories/Modeling-IDS-702/Functions")
+source("loadfile.R")
+source("exploredata.R")
+source("pullfname.R")
+```
+### Load Data Files
+```{r}
+#Load Data
+
+dir <- "C:/Users/ayoung/Desktop/Duke/Git Repositories/Modeling-IDS-702/"  ### INSERT
+folder = "Birth Data Analysis"  ### INSERT
+file = "babiesdata.csv" ### INSERT
+
+births <- loadfile(dir,folder,file)
+
+dir <- "C:/Users/ayoung/Desktop/Duke/Git Repositories/Modeling-IDS-702/" ### INSERT
+folder = "Birth Data Analysis" ### INSERT
+file = "smoking.csv" ### INSERT
+
+smoking <- loadfile(dir,folder,file)
+
+
+```
+
+### Explore Data
+
+```{r}
+exploredata(births)
+exploredata(smoking)
+```
+
+
+```{r, include=FALSE=false}
+dataframe <- 
+outcomeV <- 
+predictorA <- 
+predictorB <- 
+predictorC <- 
+predictorD <- 
+
+```
+
+
