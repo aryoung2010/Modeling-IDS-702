@@ -14,13 +14,16 @@ Load libraries and functions I've created to help with basic data analysis and d
 ```{r, include=FALSE}
 #Load libraries
 library(readr)
+
 # Load Functions
 setwd("C:/Users/ayoung/Desktop/Duke/Git Repositories/Modeling-IDS-702/Functions")
 source("loadfile.R")
 source("exploredata.R")
 source("pullfname.R")
+source("textsummary.R")
 ```
-### Load Data Files
+
+### Load Data Files (INSERT FILE NAMES HERE)
 ```{r}
 #Load Data
 
@@ -39,14 +42,17 @@ smoking <- loadfile(dir,folder,file)
 
 ```
 
-### Explore Data
-
+### Printed Summary of File
 ```{r}
-exploredata(births)
-exploredata(smoking)
+textsummary(births)
 ```
 
+### Explore Data (Ctrl+F and Replace file names for rest of analysis)
+```{r}
+exploredata(births)
 
+exploredata(smoking)
+```
 ```{r, include=FALSE=false}
 dataframe <- 
 outcomeV <- 
