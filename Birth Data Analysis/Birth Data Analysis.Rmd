@@ -11,9 +11,12 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ### Setup and Load Analysis Functions
 Load libraries and functions I've created to help with basic data analysis and dataset preview
+
 ```{r, include=FALSE}
 #Load libraries
 library(readr)
+library(ggplot2)
+library(lattice)
 
 # Load Functions
 setwd("C:/Users/ayoung/Desktop/Duke/Git Repositories/Modeling-IDS-702/Functions")
@@ -25,42 +28,100 @@ source("textsummary.R")
 
 ### Load Data Files (INSERT FILE NAMES HERE)
 ```{r}
+
 #Load Data
 
 dir <- "C:/Users/ayoung/Desktop/Duke/Git Repositories/Modeling-IDS-702/"  ### INSERT
 folder = "Birth Data Analysis"  ### INSERT
-file = "babiesdata.csv" ### INSERT
-
-births <- loadfile(dir,folder,file)
-
-dir <- "C:/Users/ayoung/Desktop/Duke/Git Repositories/Modeling-IDS-702/" ### INSERT
-folder = "Birth Data Analysis" ### INSERT
 file = "smoking.csv" ### INSERT
 
-smoking <- loadfile(dir,folder,file)
+births <- loadfile(dir,folder,file)
 
 
 ```
 
 ### Printed Summary of File
+
 ```{r}
 textsummary(births)
 ```
 
 ### Explore Data (Ctrl+F and Replace file names for rest of analysis)
+
 ```{r}
 exploredata(births)
 
-exploredata(smoking)
 ```
-```{r, include=FALSE=false}
-dataframe <- 
-outcomeV <- 
-predictorA <- 
-predictorB <- 
-predictorC <- 
-predictorD <- 
+
+### Variables
+
+```{r}
+births$bwt <- births$`bwt.oz`
+```
+
+
+### Variable Charts
+```{r}
+# Mother Race
+births$mracetxt[births$mrace== 0] <- "White"
+births$mracetxt[births$mrace== 1] <- "White"
+births$mracetxt[births$mrace== 2] <- "White"
+births$mracetxt[births$mrace== 3] <- "White"
+births$mracetxt[births$mrace== 4] <- "White"
+births$mracetxt[births$mrace== 5] <- "White"
+births$mracetxt[births$mrace== 6] <- "Mexican"
+births$mracetxt[births$mrace== 7] <- "Black"
+births$mracetxt[births$mrace== 8] <- "Asian"
+births$mracetxt[births$mrace== 9] <- "Mix"
+births$mracetxt[births$mrace== 99] <- NA
+
+births_plot <- ggplot(data = births) + geom_bar(mapping = aes(x=mracetxt))
+
+births_plot
+
+#births_byrace <- xyplot(lm(births$bwt~births$smoke)| as.factor(births$mracetxt))
+
+#births_byrace
 
 ```
 
+```{r, fig1,fig.height = 15, fig.width = 10, fig.align = "center" }
+#Smoking Status
+#sample size
+n = nrow(births)
+
+#create series of indicator variables for color
+births$smokeY = rep(0, n)
+births$smokeY[births$smoke == "Yes"] = 1
+
+births$smokeN = rep(0, n)
+births$smokeN[births$smoke == "No"] = 1
+
+plot(bwt~ smokeN + mracetxt + parity + mage + med + mht + inc, data = births)
+plot(lm(bwt~ smokeN + mracetxt + parity + mage + med + mht + inc, data = births))
+
+
+
+#plot(bwt~smokeY +  )
+Mod1 = lm(bwt~smokeN + mracetxt + parity + mage + , data = births)
+
+boxplot(bwt~smoke, data=births)
+
+plot(y=Mod1$residuals, x=births$bwt)
+abline(0,0)
+```
+
+```{r fig2, fig.height = 15, fig.width = 10, fig.align = "center"}
+ggplot(data = births) + 
+  geom_point(mapping = aes(x = med, y = bwt, color=smoke), position = "jitter") + facet_wrap(~ mracetxt, nrow = 4)
+
+```
+
+```{r}
+fit1 <- lm(Sepal.Length ~ Petal.Width, data = iris)
+summary(fit1)
+
+plot(Sepal.Length ~ Petal.Width, data = iris)
+abline(fit1)
+```
 

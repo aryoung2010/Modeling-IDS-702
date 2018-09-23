@@ -9,3 +9,15 @@ while (i<= cols){
 print(varlist)
 # varlist <- paste(names(births), collapse = ", ")
 #typelist <- type(births)
+
+
+
+```{r, include=FALSE=false}
+dataframe <- 
+  outcomeV <- 
+  predictorA <- 
+  predictorB <- 
+  predictorC <- 
+  predictorD <- 
+  
+  ```
