@@ -1,0 +1,193 @@
+---
+title: "Homework 2 Problem 29"
+author: "Allison Young"
+date: "September 20, 2018"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+
+### analysis of Problem 10.29.
+
+wagedata = read.csv("Ex1029.csv", header = T)
+
+dim(wagedata)
+wagedata[1,]
+#change names to make a couple a little bit shorter
+names(wagedata)[4] = "black"
+names(wagedata)[5] = "smsa"
+
+summary(wagedata)
+#there are negative values  for experience! let's look at a histogram of experience to see the extent of the problem
+hist(wagedata$exper)
+
+#hmm... let's count how many were below 0
+sum(wagedata$exper<0)
+
+#that's a lot!  Seems not likely to be a data entry error.  
+#we need to ask data collectors what negative values mean!  
+#let's proceed anyways and assume there is some meaning.
+#alternatively, you could decide that they are data entry errors and make them missing values, which
+#would effectively drop them from the data analysis (we will learn better ways to handle missing values than dropping)
+
+#we will mean-center education and experience anyways...
+wagedata$educcent = wagedata$educ - mean(wagedata$educ)
+wagedata$expercent = wagedata$exper - mean(wagedata$exper)
+
+#start the exploratory data analysis (EDA)
+
+plot(y = wagedata$wage, x = wagedata$educcent, ylab = "Wage", xlab = "Education (centered)")
+
+#can use a boxplot since education is integer.  maybe this will be more interpretable.
+boxplot(wagedata$wage ~ wagedata$educcent, ylab = "Wage", xlab = "Education (centered)")
+
+#hard to tell what is going on still.  let's exclude all observations with wage > 10000 from the plot
+boxplot(wagedata$wage[wagedata$wage<10000] ~ wagedata$educcent[wagedata$wage<10000], ylab = "Wage", xlab = "Education (centered)")
+
+plot(y = wagedata$wage, x = wagedata$expercent, ylab = "Wage", xlab = "Experience (centered)")
+plot(y = wagedata$wage[wagedata$wage<10000], x = wagedata$expercent[wagedata$wage<10000], ylab = "Wage", xlab = "Experience (centered)")
+
+boxplot(wagedata$wage ~ wagedata$black)
+boxplot(wagedata$wage[wagedata$wage<10000] ~ wagedata$black[wagedata$wage<10000])
+
+boxplot(wagedata$wage ~ wagedata$smsa)
+boxplot(wagedata$wage[wagedata$wage<10000] ~ wagedata$smsa[wagedata$wage<10000])
+
+boxplot(wagedata$wage ~ wagedata$region)
+boxplot(wagedata$wage[wagedata$wage<10000] ~ wagedata$region[wagedata$wage<10000])
+
+#now some preliminary investigations about interactions
+
+xyplot(wagedata$wage ~ wagedata$expercent | as.factor(wagedata$black))
+xyplot(wagedata$wage[wagedata$wage<10000] ~ wagedata$expercent[wagedata$wage<10000] | as.factor(wagedata$black[wagedata$wage<10000]))
+
+xyplot(wagedata$wage ~ wagedata$educcent | as.factor(wagedata$black))
+xyplot(wagedata$wage[wagedata$wage<10000] ~ wagedata$educcent[wagedata$wage<10000] | as.factor(wagedata$black[wagedata$wage<10000]))
+
+xyplot(wagedata$wage ~ wagedata$expercent | as.factor(wagedata$smsa))
+xyplot(wagedata$wage[wagedata$wage<10000] ~ wagedata$expercent[wagedata$wage<10000] | as.factor(wagedata$smsa[wagedata$wage<10000]))
+
+xyplot(wagedata$wage ~ wagedata$educcent | as.factor(wagedata$smsa))
+xyplot(wagedata$wage[wagedata$wage<10000] ~ wagedata$educcent[wagedata$wage<10000] | as.factor(wagedata$smsa[wagedata$wage<10000]))
+
+xyplot(wagedata$wage ~ wagedata$expercent | as.factor(wagedata$smsa))
+xyplot(wagedata$wage[wagedata$wage<10000] ~ wagedata$expercent[wagedata$wage<10000] | as.factor(wagedata$smsa[wagedata$wage<10000]))
+
+xyplot(wagedata$wage ~ wagedata$educcent | as.factor(wagedata$region))
+xyplot(wagedata$wage[wagedata$wage<10000] ~ wagedata$educcent[wagedata$wage<10000] | as.factor(wagedata$region[wagedata$wage<10000]))
+
+#not much suggesting interactions with education or experience
+
+#let's see if black interacts with the other categorical variables
+bwplot(wagedata$wage ~ as.factor(wagedata$smsa) | as.factor(wagedata$black))
+bwplot(wagedata$wage[wagedata$wage<10000] ~ as.factor(wagedata$smsa[wagedata$wage<10000]) | as.factor(wagedata$black[wagedata$wage<10000]))
+
+bwplot(wagedata$wage ~ as.factor(wagedata$region) | wagedata$black)
+bwplot(wagedata$wage[wagedata$wage<10000] ~ as.factor(wagedata$region[wagedata$wage<10000]) | as.factor(wagedata$black[wagedata$wage<10000]))
+
+#again no real strong suggestions.  So, let's start with a main effects only model to see what we get.
+
+regwage1 = lm(wage~ educcent + expercent + black + smsa + as.factor(region), data = wagedata)
+
+plot(y=regwage1$resid, x=wage$educcent)
+plot(y=regwage1$resid, x=wage$expercent)
+boxplot(regwage1$resid~wage$black)
+boxplot(regwage1$resid~wage$smsa)
+boxplot(regwage1$resid~wage$region)
+
+#I didn't like the fanning in several plots. Let's try a log transform of Y
+
+wagedata$logwage = log(wagedata$wage)
+
+#refit the regression
+regwagelog = lm(logwage~ educcent + expercent + black + smsa + as.factor(region), data = wagedata)
+
+plot(y=regwagelog$resid, x=wage$educcent)
+plot(y=regwagelog$resid, x=wage$expercent)
+boxplot(regwagelog$resid~wage$black)
+boxplot(regwagelog$resid~wage$smsa)
+boxplot(regwagelog$resid~wage$region)
+
+#seemed to help, but we might have a quadratic trend with experience
+
+wagedata$expercent2 = wagedata$expercent^2
+
+regwagelogexper2 = lm(logwage~ educcent + expercent + expercent2 + black + smsa + as.factor(region), data = wagedata)
+
+plot(y=regwagelogexper2$resid, x=wage$educcent)
+plot(y=regwagelogexper2$resid, x=wage$expercent)
+boxplot(regwagelogexper2$resid~wage$black)
+boxplot(regwagelogexper2$resid~wage$smsa)
+boxplot(regwagelogexper2$resid~wage$region)
+
+#this fixed the curve in experience.  education still a little bit of unequal variance, but not much we can do about that with what we know
+
+#now that we are reasonably happy with initial model, let's look at results
+summary(regwagelogexper2)
+
+#let's consider interaction between black and region, which was of interest in the problem description.
+
+bwplot(regwagelogexper2$residuals~as.factor(wagedata$region) | as.factor(wagedata$black))
+
+#nothing suggested in the residual plots. I probably would not use it in the final model.  Let's try anyways.
+
+regwagelogexper2Int = lm(logwage~ educcent + expercent + expercent2 + smsa + black *  as.factor(region), data = wagedata)
+
+summary(regwagelogexper2Int)
+
+#doesn't appear to be a useful predictor.  let's do the nested f test to see if adding the interaction helped any.
+
+anova(regwagelogexper2, regwagelogexper2Int)
+
+#result consistent with graphical evidence: no real evidence to argue for an interaction of region with black.
+
+#because the researcher's specific question was about the interaction, I would present the results of the
+#models with and without the interaction, and include the results from the nested F test indicating that the 
+#interaction does not noticeably improve the model fit.  this way, the researcher could see all the information.
+
+#how about making a prediction for a new person with 15 education, 20 experience, black, smsa, South region?
+#let's use the model without the interactions, since they did not seem to be that useful for predictions.
+#we need a new dataset with the same format as wagedata.  So, let's copy one row of wagedata to initialize our new dataset
+
+newdata = wagedata[1,]
+
+#now we replace each value, ignoring anything to do with wage or logwage since we won't use those in the prediction.
+#start by replacing the value of educ, which is the second column in this one row of data.
+newdata[1,2] = 15 
+#now to experience
+newdata[1,3] = 20 
+#black
+newdata[1,4] = 1 
+#smsa
+newdata[1,5] = 1 
+#region
+newdata[1,6] = "S" 
+#centered educ
+newdata[1,7] = newdata[1,2] - mean(wagedata$educ) 
+#centered exper
+newdata[1,8] = newdata[1,3] - mean(wagedata$exper) 
+#exper squared
+newdata[1,10] = newdata[1,8]^2 
+
+newdata
+#    wage educ exper black smsa region educcent expercent  logwage expercent2
+#1 354.94   15    20     1    1      S 1.923725  1.413445 5.871949   1.997826
+
+#now the prediction interval for the logwage
+predlog = predict(regwagelogexper2, newdata, interval = "prediction")
+predlog
+#       fit    lwr      upr
+#1 6.385801 5.3824 7.389201
+
+#let's exponentiate to get on a scale for predicting the wage. 
+
+exp(predlog)
+#       fit      lwr      upr
+#1 593.3596 217.5438 1618.413
+
+```

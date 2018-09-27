@@ -2,69 +2,68 @@
 title: "Birth Data Report"
 author: "Allison Young"
 date: "September 22, 2018"
-output: word_document
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+  word_document: default
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-### Setup and Load Analysis Functions
-Load libraries and functions I've created to help with basic data analysis and dataset preview
-
+## I.Setup
+Loaded libraries and functions I've created to help with basic data analysis and dataset preview.
 ```{r, include=FALSE}
 #Load libraries
 library(readr)
 library(ggplot2)
 library(lattice)
 library(lubridate)
-#install.packages("openxlsx")
 library(openxlsx)
+library(tinytex)
 
-# Load Functions
-setwd("C:/Users/ayoung/Desktop/Duke/Git Repositories/Modeling-IDS-702/Functions")
-source("loadfile.R")
-source("exploredata.R")
-source("pullfname.R")
-source("textsummary.R")
-```
 
-### Load Data Files (INSERT FILE NAMES HERE)
-```{r}
-
-#Load Data
-
+#Working Directory and files
 dir <- "C:/Users/ayoung/Desktop/Duke/Git Repositories/Modeling-IDS-702/"  ### INSERT
 folder = "Birth Data Analysis"  ### INSERT
-file = "smoking.csv" ### INSERT
+fname = "smoking.csv" ### INSERT
 
-births <- loadfile(dir,folder,file)
+# Load Functions
+source("../Functions/loadfile.R")
+source("../Functions/exploredata.r")
+source("../Functions/pullfname.R")
+source("../Functions/textsummary.R")
 
-
+#Load Data
+births <- loadfile(dir,folder,fname)
 ```
 
 ### Printed Summary of File
-
 ```{r}
-textsummary(births)
+textsummary(fname,births)
 ```
 
-### Explore Data (Ctrl+F and Replace file names for rest of analysis)
-
-```{r}
+### Explore Data 
+Explored diminsions of the file and summaries of variables.
+```{r, echo=FALSE}
 exploredata(births)
-
 ```
 
 ### Predictor Variable Transformations and Labeling
-
-```{r}
+-Changed bwt.oz to bwt, mean centered date variable and re-visited converting date variables to strings for interpretation. 
+-Created a new column, "mracetxt" to hold the new race variable names, "White" (categories 0-5), "Mexican", "Black", "Asian", and "Mix".
+-Created new label columns for mother education and mother income.
+-Plotted histograms and box plots of x variables for both continuous and categorical variables.
+```{r, include=FALSE}
 ##Birthweight (continuous, leave as cont, but maybe also do LBW catigorization if time)
 births$bwt <- births$`bwt.oz`  #make name easier to use
 
-## Date of Birth (date as a number, convert to date)
-births$dateMod <- convertToDate(births$date)
 
+## Date of Birth (date as a number, convert to date)
+births$dateCent <- births$date- mean(births$date)
+births$dateMod <- convertToDate(births$date)
 # Mother Race (Categorical, needed to condense number of categoires)
 births$mracetxt[births$mrace== 0] <- "White"
 births$mracetxt[births$mrace== 1] <- "White"
@@ -78,22 +77,21 @@ births$mracetxt[births$mrace== 8] <- "Asian"
 births$mracetxt[births$mrace== 9] <- "Mix"
 births$mracetxt[births$mrace== 99] <- NA
 
+#Mother Race
 births_plotRace <- ggplot(data = births) + geom_bar(mapping = aes(x=mracetxt))
-
 births_plotRace
 
 #Smoking Status (Boolean, Primary Predictor)
 births$smoketxt[births$smoke== 0] <- "Non-Smoker"
 births$smoketxt[births$smoke== 1] <- "Smoker"
-
 births_plotSmoke <- ggplot(data = births) + geom_bar(mapping = aes(x=smoketxt))
 births_plotSmoke
 
 #Parity (Continuous, test if linear assoc relevant to model)
+births$parityCent <-  births$parity- mean(births$parity)
 births_plotParity <- hist(births$parity)
 ordered(unique(births$parity))
 #Levels: 0 < 1 < 2 < 3 < 4 < 5 < 6 < 7 < 8 < 9 < 10 < 11
-
 births_plotParity
 
 #Mother's Age (Continuous, could group into teen/non, or linear assoc)
@@ -102,7 +100,6 @@ births_plotMAge <- hist(births$mage)
 #ordered(unique(births$mage))
 #Levels: 15 < 17 < 18 < 19 < 20 < 21 < 22 < 23 < 24 < 25 < 26 < 27 < 28 < 29 < ... < 45
 births$mageCent <- births$mage- mean(births$mage)
-
 births_plotMAge
 
 #Mother's Education (Categorical, check linear association (or Factor in few groups))
@@ -117,7 +114,6 @@ births$medtxt[births$med== 4] <- "HS Grade and Some College"
 births$medtxt[births$med== 5] <- "College Grad"
 births$medtxt[births$med== 6] <- "Trade School (HSG Unknown)"
 births$medtxt[births$med== 7] <- "Trade School (HSG Unknown)"
-
 births_plotMEd
 
 #Mother's Height (Continuous, test if relevant to model)
@@ -125,21 +121,18 @@ births_plotMHt <- hist(births$mht)
 ordered(unique(births$mht))
 #Levels: 0 < 1 < 2 < 3 < 4 < 5 < 7
 births$mhtCent <- births$mht- mean(births$mht)
-
 births_plotMHt
 
 #Mother's Weight (Continuous, test if relevant to model)
 births_plotMpregWt <- hist(births$mpregwt)
 ordered(unique(births$mpregwt))
 births$mpregwtCent <- births$mpregwt- mean(births$mpregwt)
-
 births_plotMpregWt
 
 #Monther's Income (categorical, group into 3 or so categories based on linear analysis)
 births_plotInc <- hist(births$inc)
 ordered(unique(births$inc))
 #Levels: 0 < 1 < 2 < 3 < 4 < 5 < 6 < 7 < 8 < 9
-
 births$inctxt[births$inc== 0] <- "Under 2500"
 births$inctxt[births$inc== 1] <- "2500-4999"
 births$inctxt[births$inc== 2] <- "5000-7499"
@@ -150,105 +143,198 @@ births$inctxt[births$inc== 6] <- "15000-17499"
 births$inctxt[births$inc== 7] <- "17500-19999"
 births$inctxt[births$inc== 8] <- "20000-22499"
 births$inctxt[births$inc== 9] <- "22500+"
-
 births_plotInc
 
 ##Check Added Variables
-head(births$bwt)
-head(births$smoketxt)
-head(births$medtxt)
-head(births$dateMod)
-head(births$mageCent)
-head(births$mhtCent)
-head(births$mpregwtCent)
+#head(births$bwt)
+#head(births$smoketxt)
+#head(births$medtxt)
+#head(births$dateMod)
+#head(births$mageCent)
+#head(births$mhtCent)
+#head(births$mpregwtCent)
 
-```
-
-## Outcome Variable and Initial Factorization
-```{r}
 #Smoking Status
 #sample size
 n = nrow(births)
 
-#create series of indicator variables for smoking status
+#create series of text labels for smoking status
 births$smokeY = rep(0, n)
 births$smokeY[births$smoketxt == "Smoker"] = 1
-
 births$smokeN = rep(0, n)
 births$smokeN[births$smoketxt == "Non-Smoker"] = 1
 
+#create series of text labels for mother income variable
+births$inctxt[births$inc== 0] <- "Under 2500"
+births$inctxt[births$inc== 1] <- "2500-4999"
+births$inctxt[births$inc== 2] <- "5000-7499"
+births$inctxt[births$inc== 3] <- "7500-9999"
+births$inctxt[births$inc== 4] <- "10000-12499"
+births$inctxt[births$inc== 5] <- "12500-14999"
+births$inctxt[births$inc== 6] <- "15000-17499"
+births$inctxt[births$inc== 7] <- "17500-19999"
+births$inctxt[births$inc== 8] <- "20000-22499"
+births$inctxt[births$inc== 9] <- "22500+"
+```
 
-#create series of indicator variables for mother's race
-births$mracetxtW = rep(0, n)
-births$mracetxtW[births$mracetxt == "White"] = 1
+## II. Exploring Relationships
+Outcome Variable: Birthweight (bwt)
 
-births$mracetxtB = rep(0, n)
-births$mracetxtB[births$mracetxt == "Black"] = 1
+First, I mapped a series of plots between birthweights and predictor variables, and looked at the relationship between birthweight and smoking. When looking at birthweight and smoking by race, there appeared to potentially be an interaction by race as well as a clear difference between some races, such as between black and white babies.
 
-births$mracetxtA = rep(0, n)
-births$mracetxtA[births$mracetxt == "Asian"] = 1
-
-births$mracetxtME = rep(0, n)
-births$mracetxtME[births$mracetxt == "Mexican"] = 1
-
-births$mracetxtMI = rep(0, n)
-births$mracetxtMI[births$mracetxt == "Mix"] = 1
+```{r fig1, fig.height = 5, fig.width = 6, fig.align = "center", echo=FALSE}
+boxplot(bwt~smoketxt, data=births, main= "Birthweight by Smoking Status",xlab="Smoking Status", ylab="Birthweight") #Clearly there is an association, now add other variables
+bwplot(bwt~as.factor(smoke)|mracetxt, data=births, main="Relationship between Birthweight and Smoking Status by Race", xlab= "Smoking Status", ylab = "Birthweight")
 ```
 
 ## Initial Modeling
 
+After considering inital plots and a few initial models, I settled on the first model to plot out, and check residuals for, found below.
+
+
+### Model 1 (with interaction)
+Baseline Predictor Factors:
+Smoker= Non Smoker,
+Race= White Mother
+Mother Education = HS Grad Only
+Income = $10,000 - $12,499
+
+Model Variables:
+Mother Age,
+Mother Height,
+Mother Pregnant Weight,
+Parity
+Date of Birth
+
+Interaction:
+Mother Race(As Factor) * Smoke(As Factor)
 ```{r}
-boxplot(bwt~smoke, data=births) #Clearly there is an association, now add other variables
+Mod1 <- lm(bwt~mageCent + mhtCent + mpregwtCent + dateCent+ parityCent + relevel(as.factor(medtxt), ref = "HS Grad Only")+ relevel(as.factor(inctxt), ref="10000-12499") +  relevel(as.factor(smoke), ref="0") * relevel(as.factor(mracetxt), ref="White"), data = births)
+summary(Mod1)
+```
 
-plot(lm(bwt~ smokeN + mracetxtB+ mracetxtA+ mracetxtMI +mracetxtME +parity, data = births))
-
-#Model 1
-Mod1 = lm(bwt~ smokeN + mracetxtB+ mracetxtA+ mracetxtMI +mracetxtME +parity, data = births)
-plot(y=Mod1$residuals, x=births$smokeN)
-plot(y=Mod1$residuals, x=births$mracetxt)
+####Model 1 Residuals by Predictor Variables
+The residuals for this model look pretty good.
+```{r fig2, fig.height = 15, fig.width = 15, fig.align = "center", echo=FALSE}
+par(mfrow=c(3,3))
+plot(y=Mod1$residuals, x=births$mage, xlab= "Mother Age")
 abline(0,0)
-          
-
-
+plot(y=Mod1$residuals, x=births$mht, xlab= "Mother Height")
+abline(0,0)
+plot(y=Mod1$residuals, x=births$mpregwt, xlab= "Mother Pregnant Weight")
+abline(0,0)
+plot(y=Mod1$residuals, x=births$date, xlab= "Date of Birth")
+abline(0,0)
+plot(y=Mod1$residuals, x=births$med, xlab= "Mother Education")
+abline(0,0)
+plot(y=Mod1$residuals, x=births$inc, xlab= "Mother Income")
+abline(0,0)
+plot(y=Mod1$residuals, x=births$parity, xlab= "Parity")
+abline(0,0)
+plot(y=Mod1$residuals, x=births$smoke, xlab= "Smoking Status")
+abline(0,0)
+plot(y=Mod1$residuals, x=births$mrace, xlab= "Mother Race")
+abline(0,0)
 ```
 
+###Model 2 (without interaction)
+I also created a second model without interaction and summarized it as well.
 
-## Examine Relationships
+Baseline Predictor Factors:
+Smoker= Non Smoker,
+Race= White Mother
+Mother Education = HS Grad Only
+Income = $10,000 - $12,499 
+
+Model Variables:
+Mother Age,
+Mother Height,
+Mother Pregnant Weight,
+Parity
+Date of Birth
+
+No Interaction
 
 ```{r}
-plot(bwt~smoketxt+dateMod+mageCent+mhtCent+mpregwtCent+mracetxt+medtxt+inctxt, data=births)
-
-firstModel <- lm(bwt~dateMod+mageCent+mhtCent+mpregwtCent+mracetxt+medtxt+inctxt,data=births)
-
-plot(firstModel$residuals,births$dateMod)
-plot(firstModel$residuals,births$mageCent)
-plot(firstModel$residuals,births$mhtCent)
-plot(firstModel$residuals,births$mpregwtCent)
-plot(firstModel$residuals,births$mracetxt)
-plot(firstModel$residuals,births$medtxt)
-plot(firstModel$residuals,births$inctxt)
-
+Mod2 <- lm(bwt~mageCent + mhtCent + mpregwtCent + dateCent+ parityCent + relevel(as.factor(medtxt), ref = "HS Grad Only")+ relevel(as.factor(inctxt), ref="10000-12499") +  relevel(as.factor(smoke), ref="0") + relevel(as.factor(mracetxt), ref="White"), data = births)
+summary(Mod2)
 ```
 
 
-## Factorization
-```{r, fig1,fig.height = 15, fig.width = 10, fig.align = "center" }
-
-
-
+#####Model 2 Residuals by Predictor Variable
+Plotted Variable residuals for Model 2 are similar to those of Model 1.
+```{r fig3, fig.height = 15, fig.width = 15, fig.align = "center", echo=FALSE}
+par(mfrow=c(3,3))
+plot(y=Mod2$residuals, x=births$mage, xlab= "Mother Age")
+abline(0,0)
+plot(y=Mod2$residuals, x=births$mht, xlab= "Mother Height")
+abline(0,0)
+plot(y=Mod2$residuals, x=births$mpregwt, xlab= "Mother Pregnant Weight")
+abline(0,0)
+plot(y=Mod2$residuals, x=births$date, xlab= "Date of Birth")
+abline(0,0)
+plot(y=Mod2$residuals, x=births$med, xlab= "Mother Education")
+abline(0,0)
+plot(y=Mod2$residuals, x=births$inc, xlab= "Mother Income")
+abline(0,0)
+plot(y=Mod2$residuals, x=births$parity, xlab= "Parity")
+abline(0,0)
+plot(y=Mod2$residuals, x=births$smoke, xlab= "Smoking Status")
+abline(0,0)
+plot(y=Mod2$residuals, x=births$mrace,, xlab= "Mother Race")
+abline(0,0)
 ```
 
-```{r fig2, fig.height = 15, fig.width = 10, fig.align = "center"}
-ggplot(data = births) + 
-  geom_point(mapping = aes(x = med, y = bwt, color=smoke), position = "jitter") + facet_wrap(~ mracetxt, nrow = 4)
-
+## Refining the Model
+### Are these two models different? Nested F-test
+Next, I did a comparison using ANOVA to see if the interaction I included on the first test makes a difference. Results showed that while there appears to be an interaction by race, the p value is too high to say they are signifcant ( 0.5315). [NOTE: This is also evident by the large p values of the coefficient estimates for the interaction between variables of mothers race and smoking status in the first model.]
+```{r}
+#summary(Mod1)
+#summary(Mod2)
+anova(Mod1,Mod2)
 ```
+
+###Multicollinearity
+I also looked at whether parity was highly correlated with mother's age, and if so, if it could be removed from the model. Results showed that while there is a correlation (.5), it is not high enough to remove parity from the model.
+```{r}
+cor(births$mage,births$parity)
+```
+
+After these two additional explorations, I feel good interpreting my selected model.
+
+## Final Model Interpretation
+```{r}
+summary(Mod1)
+```
+
+The Final Model I selected is:
+
+
+
+### Important Predictive Factors
+
+From my analysis, the most important predictor factors of birthweight were smoking status, the mother's race, and the height, weight, and age of mother;
+
+####Smoking Status
+
+Holding all other factors constant, we are 95% confident that the true mean difference between a smoking and non-smoking mother (White) is between CI[-12.11, -6.74], with a point estimate of -9.427 oz.
+
+####Race of Mother
+
+
+##### Interaction
+
+#### Mother Height, Pregnant Weight, and Age
+
+
+
+### Other Trends
+#### Increasing Birthweight over Time
 
 ```{r}
-fit1 <- lm(Sepal.Length ~ Petal.Width, data = iris)
-summary(fit1)
-
-plot(Sepal.Length ~ Petal.Width, data = iris)
-abline(fit1)
+coef(Mod1)
+confint(Mod1)
 ```
+
+
 

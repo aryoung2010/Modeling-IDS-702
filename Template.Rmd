@@ -1,0 +1,118 @@
+---
+title: "Template"
+author: "Allison Young"
+date: "September 25, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Setup and Load Analysis Functions
+Load libraries and functions I've created to help with basic data analysis and dataset preview
+## Analysis Set-Up
+### Load Data Libraries, Files (INSERT FILE NAMES HERE), and Functions
+```{r, include=FALSE}
+#Load libraries
+library(readr)
+library(ggplot2)
+library(lattice)
+library(lubridate)
+library(openxlsx)
+
+
+#Working Directory and files
+dir <- "C:/Users/ayoung/Desktop/Duke/Git Repositories/Modeling-IDS-702/"  ### INSERT
+folder = ""  ### INSERT
+fname = "" ### INSERT
+
+#Load Data
+ref <- loadfile(dir,folder,fname)
+
+# Load Functions
+source("../Functions/loadfile.R")
+source("../Functions/exploredata.r")
+source("../Functions/pullfname.R")
+source("../Functions/textsummary.R")
+```
+
+### Printed Summary of File
+```{r}
+textsummary(fname,ref)
+```
+############# (Ctrl+F and Replace file names for rest of analysis) #################
+
+### Explore Data 
+```{r}
+exploredata(ref)
+```
+
+### Variable Notes 
+```{r}
+#### Categorized properly? Continuous vs Categorical-- may need to factorize
+
+#### Clear outliers? Mins and Max--- leverage? or do we need to exclude from model
+
+#### Science considerations? -- interactions, etc- things you need to keep in mind 
+
+
+#### Outcome Variable?
+
+
+```
+
+
+### Data Cleaning (drop columns, drop rows - create dictionary to run through)
+```{r}
+#### Formula to drop columns 
+#makedicM(VALUES- create easy way---manual)
+#dropcol(colhead) OR dropcols(dictionary)
+
+#### Formula to drop rows based on value/s 
+#droprow(colhead,value)  OR droprows(dictionary)
+
+#### Formula to add labels for rows
+#makedicL(VALUES- create easy way---loop)
+#addlabels(dictionary)
+
+```
+
+
+### Initial look(s) at relationships (dictionary, hist, plot y to each x)
+```{r}
+### Add any summaries of interest
+
+##### Formula to create a dictionary that can use formula to compare y and x
+#### Formula to compare y to each x
+#plot(outcome~predictorA + predictorB + predictorC, data=ref)
+contp <- makedicM(continuous predictors)
+catp <-  makedicM(categorical predictors)
+
+plotcat(ref,outcome,contp,labcol)
+plotcont(ref,outcome,catp,labcol)
+
+#plot(y = sesame$postnum, x = sesame$prenum, xlab = "Pretest Numbers", ylab = "Posttest numbers")
+#boxplot(postnumb ~ viewenc, data = sesame, xlab = "Encouraged", ylab = "Posttest Numbers")
+
+remember--- cat and cont diff-- so may need to be "plot all cat", and "plot all cont" and do labels that way too
+```
+
+### Check for Muliticoliarity
+```{r}
+
+#### Formula to look through results of below code, bring back anything over .6 or < -.6 (to flag)
+#take a look at correlations among predictors for multicollinearity
+## highcol(ref, range) -- returns var1, var2, corr
+round(cor(ref), #dec)
+```
+
+### Center Continuous Variables
+### Plot Residuals
+### Measure Leverage
+
+#### Other pipedreams
+```{r}
+#### Formula that is easy to understand to create any kind of dictionary....is that diff?
+```
+

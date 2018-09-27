@@ -1,0 +1,215 @@
+---
+title: "Influence Diagnostics"
+author: "Allison Young"
+date: "September 20, 2018"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+
+###R script for checking for leverage points, outliers, and influential points, outliers
+
+# let's look at results for the diamonds data
+
+#load in the library MASS.  This should be automatically installed.  If not, then use 
+#install.packages("MASS")
+
+library(MASS)
+```
+
+```{r}
+
+#let's look at the leverage values -- hatvalues is the command to use
+leverage = hatvalues(reglogPonAll)
+
+#and also the Cook's Distance values -- cooks.distance is the command to use
+cooks = cooks.distance(reglogPonAll)
+
+#make a new diamonds dataset that appends the leverage and cooks distance values
+#I chose to make a new dataset because I didn't want to clutter the original one with stuff I don't care too much about in the end 
+d2 = cbind(diamonds, leverage, cooks)
+
+#take a look at the leverage values to pick off a few large ones for examination
+hist(leverage, main = "Leverage values for diamonds regression")
+```
+
+Leverage values are on the right in this example 0.12, 0.10--- these are things you want to look at
+
+#### High leverage: What to do?
+
+#####Points with high leverage deserve special attention:
+-Make sure that they do not result from data entry errors. (human error)
+-Make sure that they are in scope for the types of individuals for which you want to make predictions.(may not want to include in model if in a space of x that you just don't care about, not worth it to include)
+-Make sure that you look at the impact of those points on estimates, especially when you have interactions in the
+model.(if scientifically relevant, want to look at interactions)
+
+#####Just because a point is a leverage point does not mean it will have large effect on regression. That depends on
+values of the outcome variable…
+```{r}
+
+#.08 seems like it would give us a few cases with largest leverage values. Let's look at them.
+d2[d2$leverage > .08,]
+```
+
+Can see that the high leverage are all color D items. But really, this just says there is nothing special about these datapoints other than that they are Color D- there aren't many of them so they appear unusual.
+
+Could do a ton of work on indivdual points, but easier method is to use Cooks Distance.
+```{r}
+#mostly we are looking for odd values that could be data errors or diamond types we don't care about
+#nothing stands out...
+
+#same thing with Cooks disnace
+hist(cooks, main = "Cook's distances for diamonds regression")
+```
+
+####Cooks Distance
+
+Bigger Cooks values mean big influence. So looking for a point that is way far away from most.
+Not magic, explore last few.
+
+```{r}
+#.015 gives us a few cases with largest Cooks Distance values.  Let's look at the cases.
+d2[d2$cooks > .015,]
+
+#not surprisingly, these are the least and most expensive diamonds.  But no obvious pattern suggesting another transformation or that results driven by unusual diamonds.   
+```
+##### What if a point has large impact on estimates of regression coefficients?
+-Dropping that point should change the coefficients lots.
+-Changing coefficients lots should change that point’s predicted Y value lots.
+-For every point, we could delete it, re-run the regression, and see which points lead to big changes in predicted Y.
+This is time consuming.
+Turns out there is a simple formula that gives the squared change in the predicted Y value after dropping any point.
+Called the Cooks distance. 
+
+####Big Cooks Distances: What to do?
+######Examine Cooks Distance to look for large values.
+-Make sure there are no data entry errors in those points.
+-For each point with high Cooks distance, fit model with and without that point.
+-If results (predictions or scientific interpretations) do not change much, just report the final model based on
+all data points and don’t reporting anything about the Cooks Distance.
+-If results change a lot, you have several options….
+
+####Cooks distance: What to do if large changes in results?
+-OK to drop case based on PREDICTOR values if (1) scientifically meaningful to do so and (2) you intended
+to fit a model over the smaller X range to begin with (and just forgot). You have to mention this in analysis
+write-up and be careful when making predictions to avoid extrapolation.
+
+#####NOT OK to drop point based on its outcome value
+(assuming no data errors in that value). These are legitimate observations. Dropping them is cheating
+by changing the data to fit the model. Try transformations or collect more data.
+
+MUST HAVE A SCIENTIFIC REASON FOR DROPPING ANYTHING, AND MUST EXPLAIN AND BE HONEST ABOUT IT IN REPORT
+
+#### Standardized residuals (also called internally studentized residuals)
+##### How do we best identify outliers, i.e., points that don’t fit the pattern implied by the line?
+-Look for points with relatively large residuals.
+Would be nice to have a common scale to interpret what a “big” residual is, across all problems.
+-As with most metrics in statistics, we look at residual divided by its standard error (hence the
+term standardized residual).
+
+#### Standardized residuals (also called internally studentized residuals)
+-Turns out that the variance (SE) of any residual(not the ε) depends on the values of the predictors.
+-Residuals for high leverage predictors have smaller variance than residuals for low leverage predictors.
+-Intuition: the regression line tries to fit high leverage points as closely as possible, which means
+smaller residuals for those points.
+
+Standardized residuals have a Normal(0,1) distribution.
+
+- Values with large standardized residuals are outliers, in that they don’t fit the pattern implied by the line.
+-Like any normal distribution, we expect some large standardized values, e.g., 5% of standardized residuals
+should be outside (-2, 2).
+- Values with large standardized residuals not necessarily influential on the regression line. Can be an outlier without
+impacting the line.
+-In fact, really one should do residual plots with standardized residuals instead of regular ones, since they
+can reflect constant variance assumption when it is true.
+```{r}
+# here is the command for computing the standardized residuals
+
+reglogPonAllstres = rstandard(reglogPonAll)
+
+#use these in plots of residuals versus predictors.  Here is the plot versus Carats 
+
+plot(y = reglogPonAllstres, x = diamonds$Carats, ylab = "Standardized residuals", xlab = "Carats", main = "Standardized residuals versus predictor")
+abline(0,0)
+```
+
+####Standardized residuals: What to do if large outliers?
+-OK to drop case based on PREDICTOR values if (1) scientifically meaningful to do so and (2) you intended to
+fit a model over the smaller X range to begin with (and just forgot). You have to mention this in analysis write-up and
+be careful when making predictions to avoid extrapolation.
+-NOT OK to drop point based on its outcome value
+(assuming no data errors in that value). These are
+legitimate observations. Dropping them is cheating by
+changing the data to fit the model.
+
+Try transformations or collect more data.
+
+Or just do nothing! It’s okay to have some outliers.
+
+#### The problem of multicollinearity
+Cannot include two variables with a perfect linear association as
+predictors in regression,
+
+Ex: Suppose the population line is Avg. y = 3 + 4x.
+
+Suppose we try to include x and z = x/10 as predictors in the model, Avg. y = B0 + B1 x + B2 z and estimate all coefficients. Since z = x/10, we have Avg. y = B0 + B1 x + B2 x / 10 = B0 + (B1 + B2/10)x
+
+We could set B1 and B2 to ANY two numbers such that B1 + B2/10 = 4.
+
+The data cannot pick from the possible combinations.
+
+#### Multicollinearity
+Exact same problem arises for any set of predictors such that one is an exact linear combination of the
+others.
+ Ex: Consider a regression model with dummy variables for both males and females, plus an intercept Avg. y = B0 + B1 Male + B2 Female = B0(1) + B1 Male + B2 Female.
+
+Note that Male + Female = 1 for all cases. Hence, the intercept variable (always equal to 1) is a perfect linear
+combination of Male + Female.
+
+In real data, when we get “close” to perfect colinearities we see standard errors inflate, sometimes massively.
+When might we get close:
+-Very high correlations (> .9) among two (or more) predictors in modest sample sizes (2 or more cases)
+-When one (or more) variables is nearly a linear combination of the others
+-Including quadratic terms as predictors without first mean-centering the values before squaring
+-Including interactions involving continuous variables
+
+How can we diagnose presence of
+multicollinearity?
+ First step is to look at a correlation matrix of all the
+predictors (including dummy variables). Look for
+values near -1 or 1,
+ If you are suspicious that some predictor is a near
+linear combination of others, run a regression of that
+predictor on all other predictors (not including Y) to
+see if R-squared is near 1.
+
+We see multicollinearity….
+so what?
+ Multicollinearity only a problem if standard errors for the
+involved coefficients are too large for useful interpretation–
+and you care about interpreting those coefficients.
+ Harris Saving Bank analysis:
+ Main coefficient of interest is the one for fsex.
+ Rest of variables are “control variables,” i.e., variables that
+might be correlated with bsal and fsex whose effect we want
+to account for in the model.
+ I would keep age and experience in model, since I want to
+account for both variables and don’t care to interpret age or
+experience coefficients.
+ Another scenario is prediction: including highly correlated
+predictors can increase prediction uncertainty. 
+
+ What if you do want to interpret the coefficients
+involved in the multicollinearity, and the SEs are
+inflated substantially because of it?
+ Easiest remedy: remove one of the offending
+predictors. Keep one that is easiest to explain or that
+has largest T-statistic.
+ Better remedy: Use a Bayesian regression model with
+an informative prior distribution (take STA 360!)
+ Best remedy: go get more data! Multicollinearity tends
+to be unimportant in large sample sizes.

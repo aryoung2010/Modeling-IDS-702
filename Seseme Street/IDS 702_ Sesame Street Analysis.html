@@ -1,0 +1,125 @@
+<!DOCTYPE doctype PUBLIC "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+  <meta http-equiv="Content-Type"
+ content="text/html; charset=iso-8859-1">
+  <meta name="distribution" content="global">
+  <meta name="Description" content="IDS 702: Sesame Street Analysis">
+  <title>IDS 702: Sesame Street Analysis </title>
+</head>
+<body text="#000000" bgcolor="#ffffff" link="#0000ee" vlink="#551a8b"
+ alink="#ff0000" lang="EN">
+<center><font color="#000099"><font size="+3">IDS 702</font></font><br>
+<font color="#000099"><font size="+3">Modeling and Representation of Data</font></font> <br>
+&nbsp;
+<p><font color="#000000"><font size="+2">Description of Sesame Street Data</font></font></p>
+</center>
+<br>
+The television series Sesame Street is concerned mainly with teaching
+preschool skills to children age 3-5, with special emphasis on
+reaching economically disadvantaged children.  &nbsp;The show is
+designed to hold young childrens' attention through action oriented,
+short duration presentations teaching specific preschool cognitive
+skills and some social skills.  Each show is one hour and involves much
+repetition of concepts within and across shows. &nbsp;<br>
+<br>
+Does Sesame Street help economically disadvantaged children 'catch-up'
+with economically advantaged children? &nbsp;In the early 1970s,
+researchers at Educational Testing Service (the company that runs the
+SAT) ran a study to evaluate Sesame Street. &nbsp; The researchers
+sampled children representative of economically advantaged and
+disadvantaged populations from five different sites in the United
+States.  &nbsp;To ensure the study contained a group of children that
+watched Sesame Street regularly, they randomly assigned children either
+to receive encouragement to watch Sesame Street or not to receive
+encouragement. &nbsp;Those assigned to encouragement were given
+promotional materials, and received weekly visits and phone calls from
+ETS staff. &nbsp;Those assigned not to receive encouragement did not
+get this attention. The children were tested on a variety of cognitive variables, including
+knowledge of body parts, knowledge about letters, knowledge about
+numbers, etc., both before and after viewing the series.<br>
+<br>
+These data, available on Sakai in the Class Datasets folder, are part of a larger data set
+used to evaluate the impact of Sesame Street. The names of
+variables are shown in the code book below.    Questions for the data analysis are as follows.<br>
+<br>
+
+1.  Does encouragement to watch Sesame Street appear to improve students' scores on the test about numbers?  If so, by roughly how much? <br><br>
+
+2.  Does any effect of encouragement appear to differ by demographic group (site)?  Describe any differences in the effect of encouragement. <br><br>
+
+<hr width="100%" size="2">Code book with variable names <br>
+<br>
+<i> id</i> : subject identification number<br>
+<i><br>
+site</i> : &nbsp; 1 =Three to five year old disadvantaged children from
+inner city areas in various parts of the country.<br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;2 = Four year old advantaged
+suburban children. <br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;3 = Advantaged rural children.<br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;4 = Disadvantaged rural
+children.<br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;5 = Disadvantaged Spanish
+speaking children.<br>
+<br>
+<i> sex</i> &nbsp; male=1, female=2<br>
+<br>
+<i> age </i>&nbsp; age in months<br>
+<br>
+<i> viewcat</i> &nbsp;frequency of viewing<br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 1=rarely watched the
+show<br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 2=once or  twice a
+week <br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 3=three to five times
+a week<br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 4=watched the show on
+average more than 5 times a week<br>
+<br>
+<i> setting: &nbsp; &nbsp;</i>setting in which Sesame Street was viewed,
+1=home 2=school<br>
+<br>
+<i> viewenc</i> : &nbsp;treatment condition &nbsp; &nbsp;1=child
+encouraged to watch, &nbsp;2=child not encouraged to watch<br>
+<br>
+<i> prebody</i> : &nbsp;pretest on knowledge of body parts (scores range
+from 0-32)<br>
+<br>
+<i> prelet</i> : &nbsp;pretest on letters (scores range from 0-58)<br>
+<br>
+<i>preform</i> : pretest on forms (scores range from 0-20)<br>
+<br>
+<i> prenumb</i> : pretest on numbers (scores range from 0-54)<br>
+<br>
+<i> prerelat</i> : pretest on relational terms (scores range from 0-17)<br>
+<br>
+<i> preclasf</i> : pretest on classification skills<br>
+<br>
+<i> postbody</i> : posttest on knowledge of body parts (0-32)<br>
+<br>
+<i> postlet</i> : &nbsp;posttest on letters (0-58)<br>
+<br>
+<i> postform</i> :&nbsp; posttest on forms (0-20)<br>
+<br>
+<i> postnumb </i>: posttest on numbers (0-54)<br>
+<br>
+<i> postrelat</i> : posttest on relational terms (0-17)<br>
+<br>
+<i> postclasf</i>: &nbsp;posttest on classification skills<br>
+<br>
+<i> peabody</i>: &nbsp;mental age score obtained from administration of
+the Peabody Picture Vocabulary test as a pretest measure of vocabulary
+maturity.  Taken before the experimental intervention.<br>
+<br>
+<i> numbers</i>: &nbsp;  <i>postnumb - prenumb</i>.  Variable constructed by
+Prof. Reiter.<br>
+<br>
+<i> letters</i>: &nbsp;  <i>postlet - prelet</i>. Variable constructed by
+Prof. Reiter.<br>
+<br>
+<i> num.let</i>: &nbsp;  <i>numbers - letters</i>. Variable constructed by
+Prof. Reiter.<br>
+
+<br>
+</body>
+</html>
