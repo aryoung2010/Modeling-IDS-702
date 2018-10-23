@@ -3,18 +3,16 @@ title: "Birth Data Report"
 author: "Allison Young"
 date: "September 22, 2018"
 output:
+  word_document: default
   html_document:
     df_print: paged
   pdf_document: default
-  word_document: default
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## I.Setup
-Loaded libraries and functions I've created to help with basic data analysis and dataset preview.
 ```{r, include=FALSE}
 #Load libraries
 library(readr)
@@ -45,7 +43,7 @@ births <- loadfile(dir,folder,fname)
 textsummary(fname,births)
 ```
 
-### Explore Data 
+### Explored Data 
 Explored diminsions of the file and summaries of variables.
 ```{r, echo=FALSE}
 exploredata(births)
@@ -195,22 +193,24 @@ After considering inital plots and a few initial models, I settled on the first 
 ### Model 1 (with interaction)
 Baseline Predictor Factors:
 Smoker= Non Smoker,
-Race= White Mother
-Mother Education = HS Grad Only
+Race= White Mother,
+Mother Education = HS Grad Only,
 Income = $10,000 - $12,499
 
 Model Variables:
 Mother Age,
 Mother Height,
 Mother Pregnant Weight,
-Parity
+Parity,
 Date of Birth
 
 Interaction:
-Mother Race(As Factor) * Smoke(As Factor)
+Mother Race(As Factor, White) * Smoke(As Factor, Smoker)
+
+(see end of document for model output for Model 1, as this was the model I settled on)
 ```{r}
 Mod1 <- lm(bwt~mageCent + mhtCent + mpregwtCent + dateCent+ parityCent + relevel(as.factor(medtxt), ref = "HS Grad Only")+ relevel(as.factor(inctxt), ref="10000-12499") +  relevel(as.factor(smoke), ref="0") * relevel(as.factor(mracetxt), ref="White"), data = births)
-summary(Mod1)
+#summary(Mod1)
 ```
 
 ####Model 1 Residuals by Predictor Variables
@@ -242,15 +242,15 @@ I also created a second model without interaction and summarized it as well.
 
 Baseline Predictor Factors:
 Smoker= Non Smoker,
-Race= White Mother
-Mother Education = HS Grad Only
+Race= White Mother,
+Mother Education = HS Grad Only,
 Income = $10,000 - $12,499 
 
 Model Variables:
 Mother Age,
 Mother Height,
 Mother Pregnant Weight,
-Parity
+Parity,
 Date of Birth
 
 No Interaction
@@ -287,52 +287,97 @@ abline(0,0)
 
 ## Refining the Model
 ### Are these two models different? Nested F-test
-Next, I did a comparison using ANOVA to see if the interaction I included on the first test makes a difference. Results showed that while there appears to be an interaction by race, the p value is too high to say they are signifcant ( 0.5315). [NOTE: This is also evident by the large p values of the coefficient estimates for the interaction between variables of mothers race and smoking status in the first model.]
+Next, I did a comparison using ANOVA to see if the interaction I included on the first test makes a difference. Results showed that while there appears to be an interaction by race, the p value is too high to say they are signifcant ( 0.1637). [NOTE: The fact that this interaction is not significant is also evident by the large p values of the coefficient estimates for the interaction between variables of mothers race and smoking status in the first model, listed in the final interpretation of the model]
 ```{r}
-#summary(Mod1)
-#summary(Mod2)
 anova(Mod1,Mod2)
 ```
 
 ###Multicollinearity
-I also looked at whether parity was highly correlated with mother's age, and if so, if it could be removed from the model. Results showed that while there is a correlation (.5), it is not high enough to remove parity from the model.
+I also looked at whether parity was highly correlated with mother's age, and if so, if it could be removed from the model. Results showed that while there is a correlation (.52), it is not high enough to remove parity from the model.
 ```{r}
 cor(births$mage,births$parity)
 ```
 
-After these two additional explorations, I feel good interpreting my selected model.
+After these two additional explorations, the best R^2 I was able to achieve was 0.175. I have achieved is I feel good interpreting my selected model. 
 
 ## Final Model Interpretation
-```{r}
-summary(Mod1)
-```
 
 The Final Model I selected is:
 
-
+Mod1 <- lm(bwt~mageCent + mhtCent + mpregwtCent + dateCent+ parityCent + relevel(as.factor(medtxt), ref = "HS Grad Only")+ relevel(as.factor(inctxt), ref="10000-12499") +  relevel(as.factor(smoke), ref="0") * relevel(as.factor(mracetxt), ref="White"), data = births)
 
 ### Important Predictive Factors
+From my analysis, the most important predictor factors of birthweight were smoking status, the mother's race, height, and weight, and the date of birth.
 
-From my analysis, the most important predictor factors of birthweight were smoking status, the mother's race, and the height, weight, and age of mother;
+#### Mother Height, 
+Holding all other factors constant(Non-smoker,White, HS Grad Only, 10-12.5k, mean age, mean weight, mean date of birth, and mean parity), we are 95% confident that the true mean difference in birthweight for an inch increase in mother's height is between CI[0.52, 1.58], with a point estimate of 1.05 oz. 
 
-####Smoking Status
+Therefore, using this model, we can estimate that for every inch increase in the height of a mother during pregnancy, we would expect to see a 1.05 oz increase in the child's birthweight.
 
-Holding all other factors constant, we are 95% confident that the true mean difference between a smoking and non-smoking mother (White) is between CI[-12.11, -6.74], with a point estimate of -9.427 oz.
-
-####Race of Mother
-
-
-##### Interaction
-
-#### Mother Height, Pregnant Weight, and Age
+With a p value of 0.000119, this predictor is very highly significant (<.0005).
 
 
+#### Mother Pregnant Weight
+Holding all other factors constant(Non-smoker,White, HS Grad Only, 10-12.5k, mean age, mean height, mean date of birth, and mean parity), we are 95% confident that the true mean difference in birthweight for an inch increase in mother's weight is between CI[0.04, 0.17], with a point estimate of 0.11 oz. 
 
-### Other Trends
-#### Increasing Birthweight over Time
+Therefore, using this model, we can estimate that for every pound increase in the weight of a mother during pregnancy, we would expect to see a 0.11 oz increase in the child's birthweight.
+
+With a p value of 0.001210, this predictor is highly significant(<.005).
+
+
+#### Mother Age
+With a p value of 0.781, this predictor is not significant( >.05).
+
+
+#### Mother Education
+With p values >.05, this predictor is not significant.
+
+
+#### Date of Birth
+Holding all other factors constant(Non-smoker,White, HS Grad Only, 10-12.5k, mean weight, mean height, mean age, and mean parity), we are 95% confident that the true mean difference in birthweight for each additional year in date of birth, is between CI[0.73, 8.54], with a point estimate of 4.64 oz. 
+
+Therefore, using this model, we can estimate that for every year increase in the date of birth, we would expect to see a 4.64 oz increase in the child's birthweight.
+
+With a p value of 0.019987, this predictor is significant (<.05).
+
+
+#### Parity
+With a p value of 0.055566, this predictor is not significant (>.05).
+
+
+#### Smoking Status
+Holding all other factors constant(White, HS Grad Only, 10-12.5k, mean age, mean height, mean weight, mean date of birth, and mean parity, we are 95% confident that the true mean difference in birthweight between a smoking and non-smoking mother (White) is between CI[-12.11, -6.74], with a point estimate of -9.427 oz. 
+
+Therefore, using this model, we can estimate the birthweight of a baby born to a nonsmoking Mother(White, HS Grad Only, 10-12.5k): 125.26 oz. And compare that to the estimated birthweight of a mother of the same demographics, who smokes: 115.83 oz.
+
+With a p value of 0.019987, this predictor is significant (<.05).
+
+
+#### Income of Mother
+With p values >.05, this predictor is not significant.
+
+
+#### Race of Mother
+Holding all other factors constant(Non-smoker,HS Grad Only, 10-12.5k, mean age, mean height, mean weight, mean date of birth, and mean parity), we are 95% confident that the true mean difference in birthweight between a mother who is White and mothers who are of other races is between the following: Asian CI[-12.68, 1.58] & pt est (-5.55) , Black CI[-14.40,-6.11] & pt est(-10.26), Mexican CI[-7.28,8.45] & pt est (0.58), Mix CI[-10.17,9.32] & pt est (-0.42).
+
+Therefore, using this model, we can estimate the birthweight of a baby born to a White Mother(other demographics constant)as 125.26 oz. And compare that to the estimated birthweight of a mother of the same demographics, but of different Races: Asian 119.71 oz., Black 115.00 oz., Mexican 125.84 oz., Mix 124.84 oz.
+
+With a p-value of <.0005, this predictor is very highly significant.
+
+
+#### Interaction between Smoking and Race
+Finally, we can take a look at the interaction between race and smoking status as it pertains to our model. To calculate the interaction affect, we would add the difference from baseline based on smoking status + the difference from baseline based on race, and then also add a third variable, which represents the interaction for that race given smoking status.
+
+For example, a mother who is Black and smokes, will see a difference of -17.24 oz, resulting in an estimated birthweight of 108.02 oz. (as compared to a simple sum of Black race and smoker factors, which would be -19.68).
+
+However, a mother who is Mexican and smokes, will see a difference of 5.44 oz, resulting in an estimated birthweight of 130.7.(as compared to a simple sum of Mexican race and smoker factors, which would be -8.85).
+
+Therefore, it appears an interaction does exists because the combination of race and smoker results in a variation in estimated birthweight, as compared to the independent factors alone.
+
+However, with no p values <.05, we can not say any of these interactions are significant.
 
 ```{r}
-coef(Mod1)
+summary(Mod1)
 confint(Mod1)
 ```
 

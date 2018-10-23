@@ -1,0 +1,78 @@
+---
+title: "Poisson Regression"
+author: "Allison Young"
+date: "October 16, 2018"
+output: html_document
+---
+
+```{r}
+#Poisson regression for elephant mating data (Case 22.01 in The Statisticsl Sleuth, 2nd edition)
+
+elephants = read.csv("elephants.csv", header = T)
+```
+
+```{r}
+#make names lower case for ease of typing
+names(elephants) = c("age", "matings")
+
+plot(y=elephants$matings, x = elephants$age, xlab = "Age", ylab="Number of matings", main = "Matings versus Age for Elephants Data")
+
+elephants$agec = elephants$age - mean(elephants$age)
+
+elephreg = glm(matings~agec, data = elephants, family = "poisson")
+
+summary(elephreg)
+```
+
+```{r}
+confint.default(elephreg)
+```
+Interpretation of
+The expected count of Y increases by a
+multiplicative factor of when increasing
+X by one unit.
+In elephants mating example in Chapter 22, we
+have . Thus, an
+increase in age of one year increases the mean
+number of matings for elephants by a factor of 1.07
+(95% CI: 1.04 to 1.10).
+
+```{r}
+#diagnostics
+elephregresid = resid(elephreg, type = "pearson")
+
+plot(y=elephregresid, x=elephants$agec, xlab = "Age", ylab = "Pearson Residuals")
+abline(0,0)
+```
+
+Looks good, nice and random.
+
+
+```{r}
+#maybe, maybe, maybe a hint of quadratic trend.  let's try to fit quadratic term for age.
+
+elephants$agec2 = elephants$agec^2
+
+elephreg2 = glm(matings~agec + agec2, data = elephants, family = "poisson")
+
+summary(elephreg)
+```
+
+NOt really so helpful. Can do change in deviance test, but not much difference
+
+```{r}
+#test if quadratic effect is useful by change of deviance test.
+anova(elephreg, elephreg2, test = "Chisq")
+
+#quadratic term not a useful predictor.  drop it to simplify model.
+```
+
+```{r}
+#residual plot looks pretty good, so let's go with this model.
+
+#interpretation of age coefficient: multiplicative change in expected count when increasing X by one year
+
+exp(.069)
+exp(confint.default(elephreg))
+```
+

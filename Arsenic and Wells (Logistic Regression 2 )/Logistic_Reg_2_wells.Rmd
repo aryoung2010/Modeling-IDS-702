@@ -1,0 +1,599 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+#### About the dataset
+
+In many developing countries, people get their drinking water from wells.
+Sometimes these wells are contaminated with the chemical arsenic, which
+when consumed in high concentrations causes skin and bladder cancer, as well
+as cardiovascular disease. Fortunately, in many cases people living near
+contaminated wells have the opportunity to get water from nearby
+uncontaminated wells.
+
+In one study, several researchers measured the concentrations of arsenic in
+wells in a particular region of Bangladesh. They labeled wells as safe or unsafe
+based on the measurements. The researchers encouraged people drinking from
+unsafe wells to switch to safe wells. Several years later, the researchers returned
+to the area with the goal of seeing who had switched from unsafe to safe wells.
+They recorded information on a sample of 3020 individuals who had wells at
+their homes that were unsafe.
+
+We address the question: what predicts why people switch wells?
+
+#### Variables
+Switch: =1 if respondent switched to a safe well, =0 if
+still using own unsafe well
+
+Arsenic: amount of arsenic in well at respondent’s
+home (100s of micrograms per liter)
+
+Educ: years of schooling of the head of household
+
+Dist: distance in meters to the nearest known safe well
+
+Assoc: =1 if any members of household are active in
+community organizations, =0 otherwise
+
+```{r LoadData}
+#analysis of arsenic in wells data
+#install.packages("pROC")
+library(arm)
+library(pROC)
+library(readr)
+arsenic <- read_csv("arsenic.csv")
+
+#arsenic = read.csv("arsenic.csv", header = T)
+dim(arsenic)
+summary(arsenic)
+```
+
+Switch (Mean is percent valures equal 1)  , 57% are 1's
+
+Some poor soul has arsenic at 9.6, mean around 1.66
+
+Deinitely have dummy variable for association, maybe also for education--- a lot of categories, so may need to collapse some when look at education.
+
+Some large values that could be influential points--- ie distance, or could also look at adding a log to tighten it up and pull it in
+
+
+```{r Explore}
+#let's do some exploratory data analysis 
+boxplot(arsenic~switch, data = arsenic, xlab = "Switch", ylab = "Arsenic")
+boxplot(dist~switch, data = arsenic, xlab = "Switch", ylab = "Distance")
+boxplot(educ~switch, data = arsenic, xlab = "Switch", ylab = "Education")
+```
+
+#####Education
+Doing boxplots to show an "idea" of what is going on. With switches, doesn't look like a lot going on with just switch and education (but could have interactions etc), so don't rule out even if doesn't look totally important
+
+#####Arsenic
+For Arsenic, can see relationship between arsenic rates and switching.
+
+#####Distance
+Here we see a small bump up, where those who were further away were less likely to switch. Makes sense with the science- gives confidence in what going to do.
+
+```{r Tables}
+# if you want to see data in tabular format
+table(arsenic$assoc, arsenic$switch)
+table(arsenic$assoc, arsenic$switch)/3020
+```
+
+row association, column switch
+Here you can see a table of associations
+
+What it is telling you is that the pattern here is kind of the same. Marginal frequencies don't look too useful for this. 1 are both higher than 0.
+
+```{r Tapplyars}
+#another way to see relationships of categorical variables and response -- tapply command
+tapply(arsenic$switch, arsenic$assoc, mean)
+
+#could do with education, too, since it is an integer variable
+tapply(arsenic$switch, arsenic$educ, mean)
+table(arsenic$educ)
+```
+##### Association
+T apply give percentage of first variable by second (come back and see this)
+when assoc is 0, 59% switched, when 1, 55% switched (for Assoxiation)
+
+
+##### Education
+Here all around 50% up to about 7, then it goes up, but stays somewhat similar above 6.
+(but don't worry about small data points ie for levels 1, 17)
+
+Might be worth thinking about this about constant until 6, then potentially another constant trend? So perhaps make a binary?
+
+This could be an explority to look at relationship between predicted probabilities and percent 1s, see if a pattern -- using Bins or code below
+
+####For categorical predictors, look at percentages of ones
+in outcome variable for each level.
+ For continuous predictors, consider following steps:
+ Break predictor into 1o equally sized, ordered groups (or
+even more groups if lots of data)
+ Compute percentages of ones in outcome variable for
+each group.
+ See if there is a pattern, e.g., quadratic
+
+R code for categorizing continuous
+predictors
+Option 1: Use the binnedplot command:
+binnedplot(y=arsenic$switch, x = arsenic$dist)
+Option 2: Do it manually
+First install and load the Hmisc package.
+#create deciles using the cut2 command
+decilesage = cut2(arsenic$dist, g=10)
+#now compute the % of ones in each group
+tapply(arsenic$switch, decilesage, mean)
+
+```{r BinnedPlot Ars Switch}
+#remember that there are few observations at some of these values of the predictors, so the percentages
+# need to be considered in the context of large uncertainties.  but, this does suggest a change at 7 years of education.
+#we might consider a dummy variable for 7 or higher rather than a linear term... something to try later.
+
+#let's look at binnedplots of continuous predictors versus switch
+#ignore the SD lines in these plots -- they are only relevant when plotting binned residuals versus the predicted probabilities
+
+binnedplot(arsenic$arsenic, y=arsenic$switch, xlab = "Arsenic", ylab = "Switch cases", main = "Binned Arsenic and Switch cases") 
+```
+Kinda asemptotes, so possibly a log trend ---- may consider log of arsenic
+
+
+
+```{r BinnedPlot Dist Switch}
+#note the quickly increasing trend followed by flattening. Probability does not start to decrease, though, so
+#unlikely we'd want a quadratic term.  We would expect some flattening with a linear trend.  
+
+binnedplot(arsenic$dist, y=arsenic$switch, xlab = "Distance", ylab = "Switch cases", main = "Binned Distance and Switch cases") 
+#no obvious transformation suggested.
+```
+This one is more "vanilla", doesn't seem to asemptote,so maybe linear
+
+#### Exploration Summmary
+so looks like log arsenic, regular distance, possibly binary education
+
+```{r Model A}
+#let's try a logistic regression that has a main effect for every variable and linear predictors
+#begin by centering the continuous predictors (we'll leave educ alone since we might use a dummy variable later)
+
+arsenic$arsenic.c = arsenic$arsenic - mean(arsenic$arsenic)
+arsenic$dist.c = arsenic$dist - mean(arsenic$dist)
+
+arsreg1 = glm(switch ~ arsenic.c + dist.c + assoc + educ, data = arsenic, family = binomial)
+summary(arsreg1)
+```
+As simple a model as can have if for these data.
+
+does seem that arsenic is a strong predictor, z value of 11
+same with distance, with 10 meter odds 
+association, not much
+education can see moving in trend direction we expected
+
+sample interpretation:
+effect of arsenic, holding constant relationship with distance, association, eductation, we expect...
+
+```{r Model A Diag Bins}
+
+####model diagnostics
+
+##binned residual plots
+
+# compute raw residuals
+rawresid1 = arsenic$switch - fitted(arsreg1)
+
+binnedplot(x=arsenic$arsenic.c, y = rawresid1, xlab = "Arsenic centered", ylab = "Residuals", main = "Binned residuals versus arsenic")
+#note the up-then-down nature of the binned plot! we might try a transformation, say log. 
+
+binnedplot(x=arsenic$dist.c, y = rawresid1, xlab = "Distance centered", ylab = "Residuals", main = "Binned residuals versus distance")
+#not as much of a trend, really.
+
+```
+
+
+
+```{r Model A Diag Resid}
+#let's look at average residuals by education using the tapply command
+
+tapply(rawresid1, arsenic$educ, mean) 
+#unremarkable -- although, many average residuals for educ < 7 are negative and for educ > 7 are positive (at least where the sample size for the education level is non-negligible
+#we could try the dummy variable split....
+```
+education 0, fit well; at 1, not so good but remember smaller sample there.
+
+Not GREAT, but not terrible, prefer less than .07 or .06
+
+
+```{r Model A Diag Tapp}
+tapply(rawresid1, arsenic$assoc, mean) 
+#nothing helpful here...
+```
+Doesn't get better than that!
+
+binned residuals look great often when have dummy variables
+```{r Model A Diag ConfM}
+#let's do the confusion matrix with .5 threshold and with .58 threshold (marginal percentage in data)
+
+threshold = 0.5
+table(arsenic$switch, arsreg1$fitted > threshold)
+
+threshold = 0.58
+table(arsenic$switch, arsreg1$fitted > threshold)
+```
+
+.5 is default , can se not bad, lot on diag but def on counter diag too
+.58 is marginal frequency of y-- see a lot of changes!
+
+so things are happening between .5 and .58 and may be able to have room to improve model
+```{r Model A Diag ROC}
+#huge difference!  seems a lot of predicted probabilities are in the .5 yo .58  range, so cutoff matters.
+#either way, we have large off-diagonal numbers.  let's see if we can't improve the model.
+
+#look at ROC curve
+roc(arsenic$switch, fitted(arsreg1), plot=T, legacy.axes=T)
+```
+
+only thing that really jumped out was log of arsenic, so look at that and then do mean centering
+
+```{r Model B Diag Bins}
+#pretty tight to the line -- not a strongly predictive logistic regression
+
+#based on binned residual plot, let's try a log of arsenic to start with, and see what happens.
+
+arsenic$logarsenic = log(arsenic$arsenic)
+arsenic$logarsenic.c = arsenic$logarsenic - mean(arsenic$logarsenic)
+
+arsreg2 = glm(switch ~ logarsenic.c + dist.c + assoc + educ, data = arsenic, family = binomial)
+summary(arsreg2)
+```
+see value has bumped up some, so going in right direction, everything else more or less the same.
+
+may have helped some with arsenic, but check fit...
+```{r Model B Diag }
+#back to diagnostics
+
+rawresid2 = arsenic$switch - fitted(arsreg2)
+
+binnedplot(x=arsenic$logarsenic.c, y = rawresid2, xlab = "Log(Arsenic) centered", ylab = "Residuals", main = "Binned residuals versus log(arsenic)")
+#seems to have helped some!
+
+binnedplot(x=arsenic$dist, y = rawresid2, xlab = "Distance centered", ylab = "Residuals", main = "Binned residuals versus distance")
+#still not as much of a trend.
+```
+Looks like one point is way off, and this is a limitation of my model-- model fits pretty well except at the really small values of arsenic, and number of people who switchedd was smaller than expected at these values.
+
+```{r Model B Diag Tapp}
+tapply(rawresid2, arsenic$educ, mean) 
+#similar pattern as before for education. 
+```
+
+```{r Model B Diag ConfM}
+#let's do the confusion matrix
+
+threshold = 0.5
+table(arsenic$switch, arsreg2$fitted > threshold)
+
+threshold = 0.58
+table(arsenic$switch, arsreg2$fitted > threshold)
+```
+Can see helped some on diagonals
+```{r Model B Diag ROC}
+#we seem to have improved at .58 threshold (although not by much, really).
+
+#look at ROC curve
+roc(arsenic$switch, fitted(arsreg2), plot=T, legacy.axes=T)
+```
+Plot looks more or less the same. 
+Gained a little bit of predictive accuracy .64 to .65 AUC
+Not huge, but why not ! make best you can
+
+What about education- binary split help?
+```{r Model C}
+#not much difference from last curve really, although a little more prediction accuracy
+
+
+#let's see what happens if we make education a binary split at 7.
+arsenic$educg6 = rep(0, 3020)
+arsenic$educg6[arsenic$educ > 6] = 1
+
+arsreg3 = glm(switch ~ logarsenic.c + dist.c + assoc + educg6, data = arsenic, family = binomial)
+summary(arsreg3)
+```
+Kinda see sort of made a difference, z 4.4 to z 5.8-- would probably talk about the science and see if a threshold makes sense in real life, if so, keep it.
+
+
+```{r Model C Diag ROC}
+#this seems to have helped the significance of education, and it is scientifically plausible.  let's keep it!
+#should go through binned residuals again to make sure this did not worsen model fit.  It did not. 
+
+#look at new roc curve to see if it is any better
+roc(arsenic$switch, fitted(arsreg3), plot=T, legacy.axes=T)
+
+# it is a little better, with a higher area under the curve (AUC = .6632).  let's keep this model.
+```
+
+AUC .6632 pretty good- let's keep it and move on! 
+
+```{r Model D}
+
+exp(confint.default(arsreg3))
+exp(.498)
+exp(-.12)
+exp(-.0097*10)
+exp(confint.default(arsreg3)*10)
+```
+fore every 10 meters, in dist, expect odds of switiing to increase by multiplicative factor of .90 (so actually decrease by about 10%)
+
+
+To interpret...use math to eliminate log in interpretation....same as we did before,
+get 
+if mult predict by constant, then expect odds should change by factor of e to b1logc
+
+
+
+Next, think about interactions.
+```{r Interactions- education}
+### interactions in logistic regression
+
+#scientifically, it is plausible to think that there might be interactions among all the variables and arsenic, or among education and distance.
+#let's add the interactions to see if any stand out.
+
+#first, here is a way to explore the data for interactions using the binnedplot command
+
+#lets set up the graphics device to show two plots side by side 
+par(mfcol=c(2,1))
+
+#first plot for educg6 = 0
+binnedplot(arsenic$logarsenic.c[arsenic$educg6==0], y=arsenic$switch[arsenic$educg6==0], xlab = "Log Arsenic", ylab = "Switch cases", main = "Binned Arsenic and Switch cases (Educ <7)") 
+
+#next the plot for educg6 = 1
+binnedplot(arsenic$logarsenic.c[arsenic$educg6==1], y=arsenic$switch[arsenic$educg6==1], xlab = "Log Arsenic", ylab = "Switch cases", main = "Binned Arsenic and Switch cases (Educ > 6)") 
+```
+A little bit of a hook on left/lower end, so look at bc scientifically of interest.
+```{r Int Assoc and Ars}
+#we are looking for differences in the trend.  not strong ones, except possibly at low levels of arsenic.
+#I will include an interaction based on scientific arguments in favor of an interaction effect, but I am not expecting a very strong interaction effect based on this plot.
+
+#let's try for association and arsenic
+#first plot for assoc = 0
+binnedplot(arsenic$logarsenic.c[arsenic$assoc==0], y=arsenic$switch[arsenic$assoc==0], xlab = "Log Arsenic", ylab = "Switch cases", main = "Binned Arsenic and Switch cases (Assoc = 0)") 
+
+#next the plot for assoc = 1
+binnedplot(arsenic$logarsenic.c[arsenic$assoc==1], y=arsenic$switch[arsenic$assoc==1], xlab = "Log Arsenic", ylab = "Switch cases", main = "Binned Arsenic and Switch cases (Assoc = 1)") 
+```
+Really not a lot of difference.
+```{r Int Dist and Edu}
+#even less reason to suspect an interaction effect from this plot.
+
+#how about distance and education?
+#first plot for educg6 = 0
+binnedplot(arsenic$dist.c[arsenic$educg6==0], y=arsenic$switch[arsenic$educg6==0], xlab = "Distance", ylab = "Switch cases", main = "Binned Distance and Switch cases (Educ <7)") 
+
+#next the plot for educg6 = 1
+binnedplot(arsenic$dist.c[arsenic$educg6==1], y=arsenic$switch[arsenic$educg6==1], xlab = "Distance", ylab = "Switch cases", main = "Binned Distance and Switch cases (Educ > 6)") 
+```
+This is really something to look at. Looks like education combats/counters distance deterrant. Scientific basis, so want to follow up with this one.
+
+```{r}
+#this is a little more interesting -- we see one plot flatten and the other decrease.  here an interaction might be useful.
+
+
+#let's first try the model with all the interactions 
+arsreg4 = glm(switch ~ dist.c*educg6  + logarsenic.c * (assoc + educg6), data = arsenic, family = binomial)
+summary(arsreg4)
+exp(-.0125*10) # <6, inc 10 meters
+exp((-.0126+.0085)*10) # >6, inc 10 meters
+exp(0.527)
+```
+dist and education-- strongly significant, slope we expected, a little positive. 
+other slopes look similar to slopes we expected
+
+-.012 :if inc dist by 1 meter, for people less than 6 yrs education (baseline cat), the log odds change by -.012
+
+if inc dist 10 meters, for people less than 6 yrs education, the odds of switching go down by .88 (88% what were)
+
+if inc dist 10 meters, for people more than 6 yrs education, the odds of switching go down by .95 (96% what were)
+
+0.527: with everything else constant (avg log ars, avg dist) the effect of less than 7 to 7 or more years of education, the odds increase by e^0.527, or 1.69
+
+.526 + 10*.008 5 if log ars constant, but increase by 10 meters, (double check this)
+
+overall effect of association- if want to see if important, try to model with variable in and out--- anova/nested f test in linear regression, but called change in deviance test for logistic Regression
+
+##### Comparing nested models in logistic regression
+
+In linear regression we use the nested F-test to compare two nested models.
+In logistic regression we use the change in deviance test.
+Expression for change in deviance on next slide for those interested, but formula not essential for our course.
+Can use the anova command in R! Hooray!!
+
+##### Change in deviance test (see slides with formulas)
+
+
+```{r}
+#these collectively look sort of useful, especially the education ones! 
+
+#change in deviance tests to see if the full set of interactions are useful.
+
+anova(arsreg4, arsreg3, test= "Chisq")
+```
+
+Can see if significant (assoc vs no association in equation)
+
+Is highly significant- chance of getting 24 or more due to chance is really unlikely. p value really small.
+
+```{r}
+#the whole group of interactions is significant.  let's just test if the distance interaction is useful, given the other two in the model.
+
+arsreg4a= glm(switch ~ logarsenic.c * (assoc + educg6), data = arsenic, family = binomial)
+summary(arsreg4a)
+
+anova(arsreg4a, arsreg4, test= "Chisq")
+```
+
+This is test jerry prefers we use to check significance (as opposed to z test -- Pr(>|z|))
+
+```{r}
+#looks like the interaction with distance and education is useful.
+
+#let's make our final model (arsreg5) be the one with all the interaction effects.
+
+arsreg5 = glm(switch ~ dist.c*educg6  + logarsenic.c * (assoc + educg6), data = arsenic, family = binomial)
+summary(arsreg5)
+
+#let's do the binned residual plots with this perhaps final model one more time!
+
+rawresid5 = arsenic$switch - fitted(arsreg5)
+
+binnedplot(x=arsenic$logarsenic, y = rawresid5, xlab = "Log(Arsenic) centered", ylab = "Residuals", main = "Binned residuals versus log(arsenic)")
+binnedplot(x=arsenic$dist, y = rawresid5, xlab = "Distance centered", ylab = "Residuals", main = "Binned residuals versus distance")
+tapply(rawresid5, arsenic$educ, mean) 
+```
+for binned residuals versus log(arsenic), still off for really small values- so may not be a reliable model for those values- just a limitation of the model, not much you can do.
+
+for distance, pretty much as good as we will get, not more you can really do.
+
+```{r}
+#a little more diversity with education, so that seems to have helped.
+#still a little trouble fitting small log arsenic, but not too much more we can do....  go with this model!
+
+#let's do the confusion matrix
+
+threshold = 0.5
+table(arsenic$switch, arsreg5$fitted > threshold)
+
+threshold = 0.58
+table(arsenic$switch, arsreg5$fitted > threshold)
+```
+
+```{r}
+#still not moving much.... the model can predict only so well
+
+#ROC curve...
+roc(arsenic$switch, fitted(arsreg5), plot=T, legacy.axes=T)
+```
+
+A little better, not much, but like bc makes sense interpretation and science wise, and also a bit better according to data too.
+
+```{r}
+#a little better still... but we really aren't gaining a whole lot.  this is about as
+#good as we are going to get with only these variables, apparently.
+
+###model interpretations
+
+confint.default(arsreg5)   #on log odds scale
+exp(confint.default(arsreg5))   #on odds scale
+```
+Pretty tight confidence interval for dist.c
+
+##### Interpretations
+
+We have the same general interpretation as in the
+linear regression model:
+“holding all else constant, a change of 1 unit in x is
+expected to increase the log-odds of a success in y by
+.,..”
+
+For categorical predictors, use the odds ratio
+interpretation: exponentiate the estimate and CI.
+
+For numerical predictors or when variables involved in
+interactions, plot the predicted probabilities versus the
+predictor values. 
+
+Final model: interactions log(arsenic) and association, log
+arsenic and educg6, and distance and educg6.
+
+Interpretations:
+Direct: For individuals who are not part of associations and
+have less than 7 years of education, the log odds of switching
+increase by .94 (95% CI: .75 to 1.14) when increasing
+log(arsenic) by 1 unit, holding all else constant.
+
+Better: For individuals who are not part of associations and
+have less than 7 years of education, the odds of switching are
+multiplied by a factor of 2.57 (95% CI: 2.11 to 3.13) when
+increasing log(arsenic) by 1 unit, holding all else constant. 
+
+Better but still don't know what a 1 unit inc in log(arsenic) is
+
+.....kets try doubling arsenic
+
+More interpretable to alter log(arsenic) by a multiplicative
+factor than to add one to it, just like interpreting logs in
+linear regression. Let’s double arsenic and interpret the
+effect on the odds of switch.
+
+Interpretations:
+
+Direct: For individuals who are not part of associations and
+have less than 7 years of education, the log odds of switching
+increase by .654 (95% CI: .52 to .79) when doubling arsenic
+levels, holding all else constant.
+
+For individuals who are not part of associations and have less
+than 7 years of education, the odds of switching are
+multiplied by a factor of 1.92 (95% CI: 1.68 to 2.20) when
+doubling the arsenic in the well, holding all else constant. 
+
+Interpreting coefficients
+To get the .654, I double arsenic and take logs, then
+subtract to see the change in the log (odds) of switch:
+
+SEs for this change: multiply SE for coefficient (.10 from the
+regression output) by log(2) to get .069
+SEE SLIDES FOR FORMULA
+95% CI for change in log odds: .654 +/- 1.96*.069.
+To get to the odds scale, just exponentiate these results:
+exp(.654) = 1.92 and exp(.654 +/- 1.96*.069) gives 95% CI
+for odds.
+
+
+```{r Int log arsenic}
+##model is quite complicated to interpret due to interactions.  arsenic is of most interest.  
+#let's make plots to display relationships.
+
+#plot of predicted probabilities as arsenic increases for different groups.
+#set distance = to average distance (centering means we don't need to worry about it when making predictions at the average distance)
+
+#create some arsenic values in line with those in the data, going from logs centered to raw scale.
+samplelogarsenic.c = seq(from = -1, to = 2, by = .1) 
+samplelogarsenic = samplelogarsenic.c + mean(arsenic$logarsenic)
+samplearsenic = exp(samplelogarsenic)
+
+#set association = educg6 = 0.
+logitpredvalue = .239731 + .94455*samplelogarsenic.c
+predprobbaseline = exp(logitpredvalue) / (1 + exp(logitpredvalue))
+
+plot(y=predprobbaseline, x= samplearsenic, pch= 1, xlab = "Arsenic", ylab = "Predicted probability", main = "Arsenic vs. Predicted Probability")
+
+#set association =1, educg6 = 0
+logitpredvalue = .239731 + .94455*samplelogarsenic.c -.14144 - .241134*samplelogarsenic.c 
+predprobassoc = exp(logitpredvalue) / (1 + exp(logitpredvalue))
+
+plot(y=predprobassoc, x= samplearsenic, pch= 2, xlab = "Arsenic", ylab = "Predicted probability", main = "Arsenic vs. Predicted Probability")
+
+#set association =0 , educg6 = 1
+logitpredvalue = .239731 + .94455*samplelogarsenic.c + .526891 + .24461*samplelogarsenic.c 
+predprobeducg6 = exp(logitpredvalue) / (1 + exp(logitpredvalue))
+
+plot(y=predprobeducg6, x= samplearsenic, pch= 3, xlab = "Arsenic", ylab = "Predicted probability", main = "Arsenic vs. Predicted Probability")
+
+#set association = 1, educg6 = 1
+logitpredvalue = .239731 + .94455*samplelogarsenic.c + .526891 + .24461*samplelogarsenic - .14144 - .241134*samplelogarsenic.c
+predprobeducg6assoc = exp(logitpredvalue) / (1 + exp(logitpredvalue))
+
+plot(y=predprobeducg6assoc, x= samplearsenic, pch= 4, xlab = "Arsenic", ylab = "Predicted probability", main = "Arsenic vs. Predicted Probability")
+
+#plot them all on one plot with different symbols
+#make the outlines of the plot without any data.
+#to get the y axis to stretch from zero to one, make up a variable with 31 values
+
+madeupy = c(0, 1, rep(.5, 29))
+plot(y = madeupy, x = samplearsenic, type = "n", ylab = "Predicted probability", xlab = "Arsenic", main = "Predicted Probability vs. Arsenic for Different Groups")
+
+#now add the points for each category to the graph
+points(y=predprobbaseline, x= samplearsenic, pch= 1)
+points(y=predprobassoc, x= samplearsenic, pch= 2)
+points(y=predprobeducg6, x= samplearsenic, pch= 3)
+points(y=predprobeducg6assoc, x= samplearsenic, pch= 4)
+```

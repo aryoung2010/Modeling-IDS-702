@@ -293,3 +293,106 @@ Here we might want to do an analysis of whether encouragement to watch Sesame St
 as a sensitivity analysis, we can try dropping some of the pretest scores.
 For example, drop prerelat or preclassif since they are somewhat highly correlated with prenumb
 It does not appear to make much difference in our overall conclusions about encouragement.  Thus, we might as well keep all of them to aid interpretation.
+
+
+
+#### Which predictors should be in my model?
+-This is a very hard question and one of intense
+statistical research.
+-Different people have different opinions on how to
+answer the question.
+-I will talk about the key issues rather than specific
+methods.
+-See Sleuth for details on some specific methods.
+
+#### What variables to include?
+Depends on the goal of the analysis.
+
+###### Goal: prediction
+-Include only variables that are strong predictors of the
+outcome.
+-Excluding irrelevant variables can reduce the widths of
+the prediction intervals.
+
+##### Goal: interpretation and association
+-Include all variables that you thought a priori were
+related to the outcome of interest, even if they are not
+statistically significant (this is Jerry's general recommendation)
+-Improves interpretation of coefficients of interest.
+
+#### Common strategies
+
+##### Backward selection
+-Fit a large model with all variables of interest
+-Drop variables that are deemed irrelevant according to
+some criterion. Common ones include
+--Drop if p-value > .10 (possibly all at once)
+--Drop one, if any, that leads to smallest value of the AIC or BIC
+(see page 356 in Sleuth)
+
+##### Forward selection 
+-Include variables one-by-one according to some
+criterion. Common ones include
+-Include one, if any, that leads to the smallest value of the AIC
+or BIC.
+
+##### Stepwise selection
+-Potentially do one forward step to enter a variable in the
+model, using some criterion to decide if it is worth
+entering the variable.
+-From the current model, potentially do one backwards
+step, using some criterion to decide if it is worth
+dropping one of the variables in the model.
+-Repeat these steps until the model does not change.
+
+##### Penalized regression (lasso, elastic net)
+-Place a penalty on the likelihood function that favors
+setting small coefficients to zero
+
+Useful in things like genomic data- where tons of variables.
+
+#### Challenges in model selection
+-Using an automated procedure might inadvertently lead
+you to miss key transformations or interaction effects, since
+you will be tempted to press a button.
+-May find scientifically vapid models, since relying on
+automation rather than science to guide model selection.
+-May be many models with very similar values of the
+criterion you use in model selection.
+-Very difficult to interpret standard errors, because really
+you should account for the randomness in the model
+selection procedure too.
+-If a predictor is potentially important for interpretation,
+why not let the data estimate its coefficient rather than set
+it to zero? 
+
+Really important to have relationships with subject area experts who understand the field and the data.
+
+#### Strategy for interactions (really hard)
+-Use scientific understanding and interest to guide
+search for interaction effects
+-Remember, interactions are not necessarily warranted
+because two predictors are strongly associated
+-They are warranted because the relationship of the
+outcome with one predictor depends on the value of
+another predictor. That has nothing to do with
+associations among the predictors themselves.
+-You want plausible scientific explanations for the
+interactions.
+-Otherwise the model is not likely to generalize.
+
+-Risky to use a “throw everything in and then see what we
+can keep” approach.
+-Could overfit the data (too specific to that data).
+-See concerns with stepwise approach.
+-Be wary of interactions with categorical variables when you
+have few data points in some combinations of levels.
+-Including them could result in a model that overfits data.
+-If a parsimonious model seems to describe the data
+reasonably well, then it can be useful for interpretations
+and generalizability to use parsimonious model.
+
+
+
+
+NOTE : if don't know what to make baseline, pick the one with the largest sample
