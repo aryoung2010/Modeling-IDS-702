@@ -1,7 +1,7 @@
 ---
-title: "Template"
+title: "Job Training Effectiveness Analysis"
 author: "Allison Young"
-date: "September 25, 2018"
+date: "Octoer 15, 2018"
 output: html_document
 ---
 
@@ -14,6 +14,7 @@ Load libraries and functions I've created to help with basic data analysis and d
 ## Analysis Set-Up
 ### Load Data Libraries, Files (INSERT FILE NAMES HERE), and Functions
 ```{r, include=FALSE}
+
 #Load libraries
 library(readr)
 library(ggplot2)
@@ -24,8 +25,8 @@ library(openxlsx)
 
 #Working Directory and files
 dir <- "C:/Users/ayoung/Desktop/Duke/Git Repositories/Modeling-IDS-702/"  ### INSERT
-folder = ""  ### INSERT
-fname = "" ### INSERT
+folder = "Job Training, Project 1"  ### INSERT
+fname = "lalondedata.txt" ### INSERT
 
 #Load Data
 ref <- loadfile(dir,folder,fname)
