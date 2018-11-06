@@ -10,6 +10,7 @@ output: html_document
 #let's predict how often the kids watch sesame street, with focus on if encouragement pushes them towards more viewing
 
 sesame = read.csv("sesame.txt", header = T)
+summary(sesame)
 ```
 
 ```{r}
@@ -93,7 +94,7 @@ anova(viewcatreg1, viewcatreg1nosite, test = "Chisq")
 #test if encouragement is a useful  predictor using a change in deviance test
 
 viewcatreg1noenc = multinom(viewcat ~ as.factor(site) + cprenumb + cprelet + cpreform + cpreclasf + cprerelat + cprebody + cage, data = sesame)
-
+summary(viewcatreg1)
 anova(viewcatreg1, viewcatreg1noenc, test = "Chisq")
 ```
 #### Interpretation
@@ -185,7 +186,7 @@ predict(viewcatreg1, newdata, type = "probs")
 #1 0.24999038 0.1353515 0.2447120 0.3699461
 #2 0.02561089 0.2577973 0.3219774 0.3946144
 ```
-doesn't look like encouragement did a whole in terms of watching it a ton. But for all, moved it from not watching it, to watching it sometimes.
+doesn't look like encouragement did a whole lot in terms of watching it a ton. But for all, moved it from not watching it, to watching it sometimes.
 
 This is easier to understand than log odds.
 
@@ -238,4 +239,21 @@ sesame$viewcat2 = relevel(as.factor(sesame$viewcat), ref = "4")
 #then refit the model
 viewcatreg2 = multinom(viewcat2 ~ viewenc2 + as.factor(site) + cprenumb + cprelet + cpreform + cpreclasf + cprerelat + cprebody + cage, data = sesame)
 summary(viewcatreg2)
+```
+```{r}
+
+newdata = sesame[1:2,]
+newdata$site = 1
+newdata$cprenumb = 0
+newdata$cprelet = 0
+newdata$cprerelat = 0
+newdata$cpreform = 0
+newdata$cprebody = 0
+newdata$cpreclasf = 0
+newdata$cage = 0
+newdata$viewenc2[1] = 0
+newdata$viewenc2[2] = 1
+
+predict(viewcatreg1, newdata, type = "probs")
+
 ```

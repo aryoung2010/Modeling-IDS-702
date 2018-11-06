@@ -81,7 +81,7 @@ table(arsenic$assoc, arsenic$switch)/3020
 ```
 
 row association, column switch
-Here you can see a table of associations
+Here you can see a table of associations (first table is cases, second is probability)
 
 What it is telling you is that the pattern here is kind of the same. Marginal frequencies don't look too useful for this. 1 are both higher than 0.
 
@@ -117,6 +117,7 @@ each group.
 
 R code for categorizing continuous
 predictors
+
 Option 1: Use the binnedplot command:
 binnedplot(y=arsenic$switch, x = arsenic$dist)
 Option 2: Do it manually
@@ -125,6 +126,7 @@ First install and load the Hmisc package.
 decilesage = cut2(arsenic$dist, g=10)
 #now compute the % of ones in each group
 tapply(arsenic$switch, decilesage, mean)
+
 
 ```{r BinnedPlot Ars Switch}
 #remember that there are few observations at some of these values of the predictors, so the percentages
@@ -259,7 +261,7 @@ binnedplot(x=arsenic$logarsenic.c, y = rawresid2, xlab = "Log(Arsenic) centered"
 binnedplot(x=arsenic$dist, y = rawresid2, xlab = "Distance centered", ylab = "Residuals", main = "Binned residuals versus distance")
 #still not as much of a trend.
 ```
-Looks like one point is way off, and this is a limitation of my model-- model fits pretty well except at the really small values of arsenic, and number of people who switchedd was smaller than expected at these values.
+Looks like one point is way off, and this is a limitation of my model-- model fits pretty well except at the really small values of arsenic, and number of people who switched was smaller than expected at these values.
 
 ```{r Model B Diag Tapp}
 tapply(rawresid2, arsenic$educ, mean) 
@@ -268,12 +270,14 @@ tapply(rawresid2, arsenic$educ, mean)
 
 ```{r Model B Diag ConfM}
 #let's do the confusion matrix
+roc(arsenic$switch, fitted(arsreg2),plot = T, legacy.axes=T, print.thres="best")
 
 threshold = 0.5
 table(arsenic$switch, arsreg2$fitted > threshold)
 
-threshold = 0.58
-table(arsenic$switch, arsreg2$fitted > threshold)
+threshold = 0.57
+prop.table(table(arsenic$switch, arsreg2$fitted > threshold), 1)
+
 ```
 Can see helped some on diagonals
 ```{r Model B Diag ROC}
@@ -389,9 +393,9 @@ other slopes look similar to slopes we expected
 
 -.012 :if inc dist by 1 meter, for people less than 6 yrs education (baseline cat), the log odds change by -.012
 
-if inc dist 10 meters, for people less than 6 yrs education, the odds of switching go down by .88 (88% what were)
+if inc dist 10 meters, for people less than 6 yrs education, the odds of switching go down by a factor of .88 (88% what were)
 
-if inc dist 10 meters, for people more than 6 yrs education, the odds of switching go down by .95 (96% what were)
+if inc dist 10 meters, for people more than 6 yrs education, the odds of switching go down by a factor of .95 (96% what were)
 
 0.527: with everything else constant (avg log ars, avg dist) the effect of less than 7 to 7 or more years of education, the odds increase by e^0.527, or 1.69
 

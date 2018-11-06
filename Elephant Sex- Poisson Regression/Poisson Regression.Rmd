@@ -55,7 +55,7 @@ elephants$agec2 = elephants$agec^2
 
 elephreg2 = glm(matings~agec + agec2, data = elephants, family = "poisson")
 
-summary(elephreg)
+summary(elephreg2)
 ```
 
 NOt really so helpful. Can do change in deviance test, but not much difference
