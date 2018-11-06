@@ -8,7 +8,7 @@ output: html_document
 ```{r}
 #R for mercury in bass data, using multi-level models
 #install the package "lme4" to use the lmer command.
-#install.packages("lme4")
+install.packages("lme4")
 library(lme4)
 library(lattice)
 
@@ -98,11 +98,61 @@ anova(mercregnoint, mercreg)
 #they seem to be useful overall, but many are based on very small sample sizes.
 #it would be good to borrow strength across the stations to get better estimates
 #that is what a hierarchical model does!
+```
 
+Random Effects Models
+I Hierarchical models (like school data) can be applied to
+regression contexts where observations are grouped
+I We discuss models for linear regression (but ideas apply to
+logistic regression, Poisson regression, etc.)
+I Recall linear model with 2 predictors can be written
+yj = β0 + β1x1j + β2x2j + j
+, where j ∼ N(0, σ2
+)
+I Suppose that observations fall in I groups, indexed by i
+
+do same thing for intercepts as means.... shrink intercepts towards average intercept
+
+
+Random Intercepts Models
+Let i index groups and j index observations. The random
+intercepts model is
+yij = β0i + β1x1ij + β2x2ij + ij
+ij ∼ N(0, σ2
+i
+)
+β0i ∼ N(β0, τ 2
+)
+This is also written sometimes as,
+yij = β0 + β1x1ij + β2x2ij + γi + ij
+ij ∼ N(0, σ2
+i
+)
+γi ∼ N(0, τ 2
+)
+-----------------
+
+Boi -person actual blood pressure (have to be independent)
+
+-------------------
+
+Random Intercepts Models
+I Allows separate intercepts for each group, but shrinks
+estimates towards common value
+I Useful for repeated measurements, when the “groups” are
+individuals (e.g., we take a subject’s blood pressure three
+times and include all three measurements in the model)
+I Also useful when some groups have small sample sizes, so that
+estimation of intercept is highly variable
+I Model implies same slope of x1 for each group and same slope
+of x2 for each group
+
+```{r}
 #### let's do a hierarchical regression (random effects regression) with lmer
 
+
 #this call just uses a random intercept
-mercreglmerint = lmer(mercury ~ length.c + (1 | station.2), data = bass) 
+mercreglmerint = lmer(mercury ~ length.c + (1 | station.2), data = bass) # let intercept be different for every station (1|station.2)
 summary(mercreglmerint)
 
 #look at the intercepts (and the common slope) for each station
